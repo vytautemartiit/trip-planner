@@ -6,14 +6,20 @@ const getCode = (name) => {
   return clean.slice(0, 3)
 }
 
+const symbols = { EUR: '€', USD: '$', GBP: '£', PLN: 'zł', CZK: 'Kč' }
+const formatPrice = (trip, currency) => {
+  const amount = currency === 'EUR' ? trip.total_cost : trip.total_cost_converted
+  return `${amount}${symbols[currency] || currency}`
+}
+
 function App() {
   const [budget, setBudget] = useState('')
   const [days, setDays] = useState('')
   const [countries, setCountries] = useState(1)
+  const [currency, setCurrency] = useState('EUR')
   const [results, setResults] = useState([])
   const [loading, setLoading] = useState(false)
   const [searched, setSearched] = useState(false)
-  const [currency, setCurrency] = useState('EUR')
 
   const BASE_URL = 'https://orange-parakeet-4qqqgxq5x4pqhjp64-8000.app.github.dev'
 
@@ -84,6 +90,20 @@ function App() {
             ))}
           </div>
         </div>
+        <div className="field">
+          <label>Valiuta</label>
+          <select
+            className="currency-select"
+            value={currency}
+            onChange={(e) => setCurrency(e.target.value)}
+          >
+            <option value="EUR">EUR €</option>
+            <option value="USD">USD $</option>
+            <option value="GBP">GBP £</option>
+            <option value="PLN">PLN zł</option>
+            <option value="CZK">CZK Kč</option>
+          </select>
+        </div>
         <button onClick={handleSearch} disabled={loading}>
           {loading ? 'Ieškoma…' : 'Ieškoti →'}
         </button>
@@ -118,7 +138,7 @@ function App() {
                 <div className="ticket-bottom">
                   <div className="price-block">
                     <span className="price-label">Iš viso</span>
-                    <span className="price">{trip.total_cost}€</span>
+                    <span className="price">{formatPrice(trip, currency)}</span>
                   </div>
                   <div className="breakdown">
                     <span>Skrydis {trip.flight_cost}€</span>
@@ -155,7 +175,7 @@ function App() {
                 <div className="ticket-bottom">
                   <div className="price-block">
                     <span className="price-label">Iš viso</span>
-                    <span className="price">{trip.total_cost}€</span>
+                    <span className="price">{formatPrice(trip, currency)}</span>
                   </div>
                   <div className="breakdown">
                     {trip.breakdown.map((b, i) => (
