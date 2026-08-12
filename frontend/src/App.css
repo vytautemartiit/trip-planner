@@ -283,3 +283,13 @@ body {
   background: var(--navy);
   color: var(--paper);
 }
+.currency-select {
+  border: none;
+  border-bottom: 2px solid var(--navy);
+  background: transparent;
+  font-family: 'Space Mono', monospace;
+  font-size: 16px;
+  padding: 6px 4px;
+  color: var(--ink);
+  cursor: pointer;
+}
