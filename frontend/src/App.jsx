@@ -13,6 +13,7 @@ function App() {
   const [results, setResults] = useState([])
   const [loading, setLoading] = useState(false)
   const [searched, setSearched] = useState(false)
+  const [currency, setCurrency] = useState('EUR')
 
   const BASE_URL = 'https://orange-parakeet-4qqqgxq5x4pqhjp64-8000.app.github.dev'
 
@@ -23,8 +24,8 @@ function App() {
     try {
       const endpoint =
         countries === 1
-          ? `${BASE_URL}/search?budget=${budget}&days=${days}`
-          : `${BASE_URL}/search-multi?budget=${budget}&days=${days}&countries=${countries}`
+          ? `${BASE_URL}/search?budget=${budget}&days=${days}&currency=${currency}`
+          : `${BASE_URL}/search-multi?budget=${budget}&days=${days}&countries=${countries}&currency=${currency}`
 
       const response = await fetch(endpoint)
       const data = await response.json()
