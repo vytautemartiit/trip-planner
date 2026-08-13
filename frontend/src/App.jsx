@@ -1,193 +1,274 @@
-import { useState } from 'react'
-import './App.css'
+import { useState } from 'react';
+import './App.css';
 
-const getCode = (name) => {
-  const clean = name.split(',')[0].trim().toUpperCase()
-  return clean.slice(0, 3)
+// 1. Šalių ir miestų duomenys
+const DESTINATIONS = [
+  { id: 1, name: 'Barselona', code: 'BCN', flight_price: 120, hotel_per_night: 60, daily_cost: 40 },
+  { id: 2, name: 'Roma', code: 'FCO', flight_price: 90, hotel_per_night: 50, daily_cost: 35 },
+  { id: 3, name: 'Paryžius', code: 'CDG', flight_price: 150, hotel_per_night: 80, daily_cost: 50 },
+  { id: 4, name: 'Varšuva', code: 'WAW', flight_price: 40, hotel_per_night: 30, daily_cost: 20 },
+  { id: 5, name: 'Ryga', code: 'RIX', flight_price: 30, hotel_per_night: 35, daily_cost: 25 },
+  { id: 6, name: 'Praha', code: 'PRG', flight_price: 80, hotel_per_night: 45, daily_cost: 30 },
+];
+
+const symbols = {
+  EUR: '€',
+  USD: '$',
+  GBP: '£',
+};
+
+// 2. Skaičiuojama 1 šalies kaina
+function calculateTripCost(destination, days) {
+  const safeDays = Math.max(1, days);
+  const nights = Math.max(0, safeDays - 1);
+  const flightCost = destination.flight_price;
+  const hotelCost = destination.hotel_per_night * nights;
+  const livingCost = destination.daily_cost * safeDays;
+  const totalCost = flightCost + hotelCost + livingCost;
+
+  return {
+    ...destination,
+    days: safeDays,
+    nights,
+    flightCost,
+    hotelCost,
+    livingCost,
+    totalCost,
+  };
 }
 
-const symbols = { EUR: '€', USD: '$', GBP: '£', PLN: 'zł', CZK: 'Kč' }
-const formatPrice = (trip, currency) => {
-  const amount = currency === 'EUR' ? trip.total_cost : trip.total_cost_converted
-  return `${amount}${symbols[currency] || currency}`
+// 3. Kombinacijų generavimas
+function getCombinations(arr, size) {
+  if (size === 1) return arr.map((item) => [item]);
+  const combinations = [];
+  arr.forEach((item, index) => {
+    const tailCombinations = getCombinations(arr.slice(index + 1), size - 1);
+    tailCombinations.forEach((tail) => combinations.push([item, ...tail]));
+  });
+  return combinations;
+}
+
+// 4. Multi-city kelionių skaičiavimas
+function findMultiCountryTrips(budget, totalDays, numCountries) {
+  const daysPerCountry = Math.floor(totalDays / numCountries);
+  if (daysPerCountry < 1 || numCountries < 1) return [];
+
+  const combos = getCombinations(DESTINATIONS, numCountries);
+  const results = [];
+
+  combos.forEach((combo) => {
+    let totalCost = 0;
+    const breakdown = combo.map((dest) => {
+      const trip = calculateTripCost(dest, daysPerCountry);
+      totalCost += trip.totalCost;
+      return trip;
+    });
+
+    if (totalCost <= budget) {
+      results.push({
+        id: combo.map((c) => c.code).join('-'),
+        countries: breakdown.map((d) => d.name),
+        codes: breakdown.map((d) => d.code),
+        daysPerCountry,
+        totalCost,
+        breakdown,
+      });
+    }
+  });
+
+  return results.sort((a, b) => a.totalCost - b.totalCost);
 }
 
 function App() {
-  const [budget, setBudget] = useState('')
-  const [days, setDays] = useState('')
-  const [countries, setCountries] = useState(1)
-  const [currency, setCurrency] = useState('EUR')
-  const [results, setResults] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [searched, setSearched] = useState(false)
+  const [currency, setCurrency] = useState('EUR');
+  const [budget, setBudget] = useState('800');
+  const [days, setDays] = useState('6');
+  const [tripType, setTripType] = useState('single');
+  const [numCountries, setNumCountries] = useState('2'); // Miestų skaičius kaip įvestis ranka
 
-  const BASE_URL = 'https://orange-parakeet-4qqqgxq5x4pqhjp64-8000.app.github.dev'
+  const numericBudget = Number(budget) || 0;
+  const numericDays = Number(days) || 1;
+  const numericNumCountries = Math.min(Number(numCountries) || 2, DESTINATIONS.length); // Apribojame iki turimų miestų kiekio
 
-  const handleSearch = async () => {
-    if (!budget || !days) return
-    setLoading(true)
-    setSearched(true)
-    try {
-      const endpoint =
-        countries === 1
-          ? `${BASE_URL}/search?budget=${budget}&days=${days}&currency=${currency}`
-          : `${BASE_URL}/search-multi?budget=${budget}&days=${days}&countries=${countries}&currency=${currency}`
+  // Single trip rezultatai
+  const singleTrips = DESTINATIONS
+    .map((dest) => calculateTripCost(dest, numericDays))
+    .filter((trip) => trip.totalCost <= numericBudget)
+    .sort((a, b) => a.totalCost - b.totalCost);
 
-      const response = await fetch(endpoint)
-      const data = await response.json()
-      setResults(data.results || [])
-    } catch (err) {
-      setResults([])
-    }
-    setLoading(false)
-  }
+  // Multi-city rezultatai
+  const multiTrips = findMultiCountryTrips(numericBudget, numericDays, numericNumCountries);
 
   return (
     <div className="app">
       <header className="hero">
-        <span className="eyebrow">Maršrutų skyrius · VNO</span>
-        <h1>Kelionės Planuotojas</h1>
-        <p className="subtitle">Įvesk biudžetą ir trukmę — gauk atspausdintus maršrutus.</p>
+        <span className="eyebrow">Kelionių skaičiuoklė</span>
+        <h1>Atostogų Planuoklis</h1>
+        <p className="subtitle">Planuokite pavienes keliones arba kelių miestų maršrutus</p>
       </header>
 
-      <div className="counter">
+      <section className="counter">
+        <div className="field">
+          <label>Tipas</label>
+          <select 
+            className="currency-select"
+            value={tripType} 
+            onChange={(e) => setTripType(e.target.value)}
+          >
+            <option value="single">1 Miestas</option>
+            <option value="multi">Multi-City (Keli miestai)</option>
+          </select>
+        </div>
+
+        {/* Miestų skaičiaus įvestis ranka */}
+        {tripType === 'multi' && (
+          <div className="field">
+            <label>Miestų skaičius</label>
+            <div className="input-row">
+              <input
+                type="number"
+                min="2"
+                max={DESTINATIONS.length}
+                placeholder="2"
+                value={numCountries}
+                onChange={(e) => setNumCountries(e.target.value)}
+              />
+            </div>
+          </div>
+        )}
+
+        <div className="field">
+          <label>Valiuta</label>
+          <select 
+            className="currency-select"
+            value={currency} 
+            onChange={(e) => setCurrency(e.target.value)}
+          >
+            <option value="EUR">EUR (€)</option>
+            <option value="USD">USD ($)</option>
+            <option value="GBP">GBP (£)</option>
+          </select>
+        </div>
+
         <div className="field">
           <label>Biudžetas</label>
           <div className="input-row">
-            <span className="unit">€</span>
+            <span className="unit">{symbols[currency] || currency}</span>
             <input
               type="number"
+              min="1"
               placeholder="500"
               value={budget}
               onChange={(e) => setBudget(e.target.value)}
             />
           </div>
         </div>
+
         <div className="field">
-          <label>Trukmė</label>
+          <label>Bendra trukmė</label>
           <div className="input-row">
             <input
               type="number"
-              placeholder="5"
+              min="1"
+              placeholder="6"
               value={days}
               onChange={(e) => setDays(e.target.value)}
             />
             <span className="unit">d.</span>
           </div>
         </div>
-        <div className="field">
-          <label>Šalių sk.</label>
-          <div className="stepper">
-            {[1, 2, 3].map((n) => (
-              <button
-                key={n}
-                className={countries === n ? 'step active' : 'step'}
-                onClick={() => setCountries(n)}
-                type="button"
-              >
-                {n}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="field">
-          <label>Valiuta</label>
-          <select
-            className="currency-select"
-            value={currency}
-            onChange={(e) => setCurrency(e.target.value)}
-          >
-            <option value="EUR">EUR €</option>
-            <option value="USD">USD $</option>
-            <option value="GBP">GBP £</option>
-            <option value="PLN">PLN zł</option>
-            <option value="CZK">CZK Kč</option>
-          </select>
-        </div>
-        <button onClick={handleSearch} disabled={loading}>
-          {loading ? 'Ieškoma…' : 'Ieškoti →'}
-        </button>
-      </div>
+      </section>
 
-      <div className="results">
-        {searched && !loading && results.length === 0 && (
-          <p className="empty">Nieko netelpa į šį biudžetą — pabandyk didesnę sumą arba trumpesnę kelionę.</p>
-        )}
-
-        {countries === 1
-          ? results.map((trip, index) => (
-              <div key={index} className="ticket">
+      {/* Rezultatai */}
+      <section className="results">
+        {tripType === 'single' ? (
+          singleTrips.length > 0 ? (
+            singleTrips.map((trip) => (
+              <div key={trip.id} className="ticket">
                 <div className="ticket-top">
                   <div className="route">
-                    <span className="code">VNO</span>
-                    <span className="plane">✈</span>
-                    <span className="code">{getCode(trip.destination)}</span>
+                    <span className="plane">✈</span> VNO → {trip.code}
                   </div>
-                  <span className="ticket-no">№ {String(index + 1).padStart(3, '0')}</span>
+                  <span className="ticket-no">#TK-{100 + trip.id}</span>
                 </div>
 
-                <div className="destination">{trip.destination}</div>
-                <div className="days-label">{trip.days} dienos</div>
+                <div className="destination">{trip.name}</div>
+                <div className="days-label">{trip.days} d. ({trip.nights} naktys)</div>
 
                 <div className="perforation">
-                  <span className="hole hole-left" />
-                  <span className="dashes" />
-                  <span className="hole hole-right" />
+                  <div className="hole hole-left"></div>
+                  <div className="dashes"></div>
+                  <div className="hole hole-right"></div>
                 </div>
 
                 <div className="ticket-bottom">
                   <div className="price-block">
-                    <span className="price-label">Iš viso</span>
-                    <span className="price">{formatPrice(trip, currency)}</span>
+                    <span className="price-label">Iš viso kaina</span>
+                    <span className="price">
+                      {trip.totalCost} {symbols[currency]}
+                    </span>
                   </div>
                   <div className="breakdown">
-                    <span>Skrydis {trip.flight_cost}€</span>
-                    <span>Nakvynė {trip.hotel_cost}€</span>
-                    <span>Pragyvenimas {trip.living_cost}€</span>
+                    <span>Skrydis: {trip.flightCost} {symbols[currency]}</span>
+                    <span>Viešbučiai: {trip.hotelCost} {symbols[currency]}</span>
+                    <span>Maistas/Išlaidos: {trip.livingCost} {symbols[currency]}</span>
                   </div>
                 </div>
               </div>
             ))
-          : results.map((trip, index) => (
-              <div key={index} className="ticket">
+          ) : (
+            <p className="empty">
+              Už {numericBudget} {symbols[currency]} {numericDays} d. kelionei variantų nerasta.
+            </p>
+          )
+        ) : (
+          multiTrips.length > 0 ? (
+            multiTrips.map((multi) => (
+              <div key={multi.id} className="ticket">
                 <div className="ticket-top">
                   <div className="route">
-                    <span className="code">VNO</span>
-                    {trip.countries.map((c, i) => (
-                      <span key={i}>
-                        <span className="plane">✈</span>
-                        <span className="code">{getCode(c)}</span>
-                      </span>
-                    ))}
+                    <span className="plane">✈</span> VNO → {multi.codes.join(' → ')}
                   </div>
-                  <span className="ticket-no">№ {String(index + 1).padStart(3, '0')}</span>
+                  <span className="ticket-no">#MULTI-{multi.codes.length}</span>
                 </div>
 
-                <div className="destination">{trip.countries.join(' · ')}</div>
-                <div className="days-label">{trip.days_per_country} d. kiekvienoje šalyje</div>
+                <div className="destination">{multi.countries.join(' + ')}</div>
+                <div className="days-label">
+                  {numericDays} d. bendrai (po {multi.daysPerCountry} d. kiekviename mieste)
+                </div>
 
                 <div className="perforation">
-                  <span className="hole hole-left" />
-                  <span className="dashes" />
-                  <span className="hole hole-right" />
+                  <div className="hole hole-left"></div>
+                  <div className="dashes"></div>
+                  <div className="hole hole-right"></div>
                 </div>
 
                 <div className="ticket-bottom">
                   <div className="price-block">
-                    <span className="price-label">Iš viso</span>
-                    <span className="price">{formatPrice(trip, currency)}</span>
+                    <span className="price-label">Bendra suminė kaina</span>
+                    <span className="price">
+                      {multi.totalCost} {symbols[currency]}
+                    </span>
                   </div>
                   <div className="breakdown">
-                    {trip.breakdown.map((b, i) => (
-                      <span key={i}>{getCode(b.destination)}: {b.total_cost}€</span>
+                    {multi.breakdown.map((item, idx) => (
+                      <span key={idx}>
+                        {item.name}: {item.totalCost} {symbols[currency]}
+                      </span>
                     ))}
                   </div>
                 </div>
               </div>
-            ))}
-      </div>
+            ))
+          ) : (
+            <p className="empty">
+              Už {numericBudget} {symbols[currency]} nerasta {numericNumCountries} miestų kombinacijų {numericDays} d. laikotarpiui. Padidinkite biudžetą arba dienų skaičių.
+            </p>
+          )
+        )}
+      </section>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;

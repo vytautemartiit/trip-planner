@@ -2,7 +2,7 @@
 
 A full-stack application that helps plan trips within a budget — for single or multi-country journeys, with real-time currency conversion.
 
-**[🔗 View demo]()**
+**[🔗 View demo](https://supreme-computing-machine-r777rj7qj9vq29w6-5173.app.github.dev/)**
 
 ## Why this project?
 
@@ -81,7 +81,7 @@ Built while learning full-stack development — from backend logic to API integr
 
 Full-stack aplikacija, kuri padeda susiplanuoti kelionę pagal biudžetą — vienai ar kelioms šalims vienu metu, su realaus laiko valiutos konvertavimu.
 
-**[🔗 Peržiūrėti demo]()** *(nuoroda bus pridėta po deploy'inimo)*
+**[🔗 Peržiūrėti demo](https://supreme-computing-machine-r777rj7qj9vq29w6-5173.app.github.dev/)**
 
 ## Kodėl šis projektas?
 
