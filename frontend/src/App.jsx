@@ -50,16 +50,25 @@ function getCombinations(arr, size) {
 
 // 4. Multi-city kelionių skaičiavimas
 function findMultiCountryTrips(budget, totalDays, numCountries) {
-  const daysPerCountry = Math.floor(totalDays / numCountries);
-  if (daysPerCountry < 1 || numCountries < 1) return [];
+  if (numCountries < 1) return [];
+
+  const baseDays = Math.floor(totalDays / numCountries);
+  const remainder = totalDays % numCountries;
+  if (baseDays < 1) return [];
+
+  // Likusios dienos (remainder) paskirstomos po 1 papildomą dieną pirmiems miestams,
+  // kad visos dienos būtų išnaudotos tolygiai, o ne prarandamos apvalinant žemyn.
+  const daysDistribution = Array.from({ length: numCountries }, (_, i) =>
+    baseDays + (i < remainder ? 1 : 0)
+  );
 
   const combos = getCombinations(DESTINATIONS, numCountries);
   const results = [];
 
   combos.forEach((combo) => {
     let totalCost = 0;
-    const breakdown = combo.map((dest) => {
-      const trip = calculateTripCost(dest, daysPerCountry);
+    const breakdown = combo.map((dest, idx) => {
+      const trip = calculateTripCost(dest, daysDistribution[idx]);
       totalCost += trip.totalCost;
       return trip;
     });
@@ -69,7 +78,6 @@ function findMultiCountryTrips(budget, totalDays, numCountries) {
         id: combo.map((c) => c.code).join('-'),
         countries: breakdown.map((d) => d.name),
         codes: breakdown.map((d) => d.code),
-        daysPerCountry,
         totalCost,
         breakdown,
       });
@@ -234,7 +242,7 @@ function App() {
 
                 <div className="destination">{multi.countries.join(' + ')}</div>
                 <div className="days-label">
-                  {numericDays} d. bendrai (po {multi.daysPerCountry} d. kiekviename mieste)
+                  {numericDays} d. bendrai ({multi.breakdown.map((item) => `${item.name}: ${item.days} d.`).join(', ')})
                 </div>
 
                 <div className="perforation">
