@@ -50,28 +50,38 @@ def find_multi_country_trips(budget, total_days, num_countries):
     total_days - bendra kelionės trukmė dienomis
     num_countries - kiek šalių nori aplankyti (pvz., 2 arba 3)
     """
-    days_per_country = total_days // num_countries  # dienos kiekvienai šaliai (po lygiai)
-    
+    if num_countries < 1 or total_days < num_countries:
+        return []
+
+    base_days = total_days // num_countries
+    remainder = total_days % num_countries
+
+    # Likusios dienos paskirstomos po 1 papildomą dieną pirmiems miestams,
+    # kad visos dienos būtų išnaudotos, o ne prarandamos apvalinant žemyn.
+    days_distribution = [
+        base_days + (1 if i < remainder else 0)
+        for i in range(num_countries)
+    ]
+
     results = []
-    
-    # Generuojame visas galimas šalių kombinacijas
+
     for combo in combinations(destinations, num_countries):
         total_cost = 0
         breakdown = []
-        
-        for destination in combo:
-            trip = calculate_trip_cost(destination, days_per_country)
+
+        for destination, days in zip(combo, days_distribution):
+            trip = calculate_trip_cost(destination, days)
             total_cost += trip["total_cost"]
             breakdown.append(trip)
-        
+
         if total_cost <= budget:
             results.append({
                 "countries": [d["destination"] for d in breakdown],
-                "days_per_country": days_per_country,
+                "total_days": total_days,
                 "total_cost": total_cost,
                 "breakdown": breakdown
             })
-    
+
     results.sort(key=lambda x: x["total_cost"])
-    
+
     return results

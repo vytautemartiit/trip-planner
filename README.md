@@ -14,6 +14,8 @@ Most flight search tools (Skyscanner, etc.) search a single A→B route. This pr
 - 🌍 Multi-country (2–3) combination generation and cost calculation
 - 💱 Real-time currency conversion (Frankfurter API, ECB rates)
 - 🎨 Custom UI design ("boarding pass" theme)
+- ✅ Unit tests (pytest) covering the cost calculation logic
+- 📱 Installable as a PWA (Progressive Web App)
 
 ## Tech Stack
 
@@ -56,6 +58,12 @@ pip install fastapi uvicorn requests
 uvicorn main:app --reload --port 8000
 ```
 
+**Running tests:**
+```bash
+cd backend
+pytest
+```
+
 **Frontend:**
 ```bash
 cd frontend
@@ -93,6 +101,8 @@ Dauguma kelionių paieškos įrankių (Skyscanner ir pan.) ieško vieno maršrut
 - 🌍 Kelių šalių (2–3) kombinacijų generavimas ir kainų skaičiavimas
 - 💱 Realaus laiko valiutos konvertavimas (Frankfurter API, ECB kursai)
 - 🎨 Savitas UI dizainas ("boarding pass" tema)
+- ✅ Unit testai (pytest), tikrinantys kainos skaičiavimo logiką
+- 📱 Įdiegiama kaip PWA (Progressive Web App)
 
 ## Tech Stack
 
@@ -133,6 +143,12 @@ python3 -m venv venv
 source venv/bin/activate
 pip install fastapi uvicorn requests
 uvicorn main:app --reload --port 8000
+```
+
+**Testų paleidimas:**
+```bash
+cd backend
+pytest
 ```
 
 **Frontend:**
