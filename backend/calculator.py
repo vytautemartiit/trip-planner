@@ -53,7 +53,7 @@ def find_multi_country_trips(budget, total_days, num_countries):
     days_per_country = total_days // num_countries  # dienos kiekvienai šaliai (po lygiai)
     
     results = []
-    ``
+    
     # Generuojame visas galimas šalių kombinacijas
     for combo in combinations(destinations, num_countries):
         total_cost = 0
