@@ -1,15 +1,16 @@
 from itertools import combinations
-from data import destinations
+from origins import DEFAULT_ORIGIN, available_destinations, flight_price
 
-def calculate_trip_cost(destination, days):
+def calculate_trip_cost(destination, days, origin=DEFAULT_ORIGIN):
     """
     Apskaičiuoja bendrą vienos šalies/miesto kelionės kainą.
     destination - žodynas su flight_price, hotel_per_night, daily_cost
     days - kelionės trukmė dienomis
+    origin - oro uosto kodas, iš kurio skrendama (pvz. "VNO")
     """
     nights = days - 1  # jei keliauji 3 dienas, nakvoji 2 naktis
     
-    flight_cost = destination["flight_price"]
+    flight_cost = flight_price(destination, origin)
     hotel_cost = destination["hotel_per_night"] * nights
     living_cost = destination["daily_cost"] * days
     
@@ -21,11 +22,13 @@ def calculate_trip_cost(destination, days):
         "flight_cost": flight_cost,
         "hotel_cost": hotel_cost,
         "living_cost": living_cost,
-        "total_cost": total
+        "total_cost": total,
+        "origin": origin,
+        "flight_estimated": origin != DEFAULT_ORIGIN,
     }
 
 
-def find_destinations_within_budget(budget, days):
+def find_destinations_within_budget(budget, days, origin=DEFAULT_ORIGIN):
     """
     Randa visas kelionės kryptis, kurios telpa į nurodytą biudžetą.
     budget - vartotojo bendras biudžetas (eurais)
@@ -33,8 +36,8 @@ def find_destinations_within_budget(budget, days):
     """
     results = []
     
-    for destination in destinations:
-        trip = calculate_trip_cost(destination, days)
+    for destination in available_destinations(origin):
+        trip = calculate_trip_cost(destination, days, origin)
         if trip["total_cost"] <= budget:
             results.append(trip)
     
@@ -43,7 +46,7 @@ def find_destinations_within_budget(budget, days):
     
     return results
 
-def find_multi_country_trips(budget, total_days, num_countries):
+def find_multi_country_trips(budget, total_days, num_countries, origin=DEFAULT_ORIGIN):
     """
     Randa kelių šalių kelionių kombinacijas, kurios telpa į biudžetą.
     budget - bendras biudžetas
@@ -65,12 +68,12 @@ def find_multi_country_trips(budget, total_days, num_countries):
 
     results = []
 
-    for combo in combinations(destinations, num_countries):
+    for combo in combinations(available_destinations(origin), num_countries):
         total_cost = 0
         breakdown = []
 
         for destination, days in zip(combo, days_distribution):
-            trip = calculate_trip_cost(destination, days)
+            trip = calculate_trip_cost(destination, days, origin)
             total_cost += trip["total_cost"]
             breakdown.append(trip)
 
@@ -79,6 +82,7 @@ def find_multi_country_trips(budget, total_days, num_countries):
                 "countries": [d["destination"] for d in breakdown],
                 "total_days": total_days,
                 "total_cost": total_cost,
+                "origin": origin,
                 "breakdown": breakdown
             })
 
