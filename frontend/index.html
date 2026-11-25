@@ -4,7 +4,29 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>frontend</title>
+    <meta name="theme-color" content="#fce6cc" />
+    <title>Trip Planner – trips that fit your budget</title>
+    <meta name="description" content="Set a budget and trip length and see which European cities you can afford: flights, stays and daily costs from 30+ airports." />
+    <link rel="canonical" href="https://vytautemartiit.github.io/trip-planner/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Trip Planner" />
+    <meta property="og:title" content="Trip Planner – trips that fit your budget" />
+    <meta property="og:description" content="Flights, stays and daily costs from 30+ European airports. Pick a budget, see where it takes you." />
+    <meta property="og:url" content="https://vytautemartiit.github.io/trip-planner/" />
+    <meta property="og:image" content="https://vytautemartiit.github.io/trip-planner/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Trip Planner: trips that fit your budget" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
+    <script>
+      // Pick light or dark before the page paints (theme.js takes over after that)
+      try {
+        var t = localStorage.getItem('trip-planner:theme')
+        if (t !== 'light' && t !== 'dark') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+        document.documentElement.dataset.theme = t
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>
