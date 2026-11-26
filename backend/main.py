@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from calculator import calculate_trip_cost, find_destinations_within_budget, find_multi_country_trips
 from data import destinations
-from currency import convert_amount
+from currency import CURRENCIES, convert_amount, get_rates, to_eur
 from db import init_db
 from origins import DEFAULT_ORIGIN, ORIGINS, available_destinations, clean_origin, flight_price, origin_list
 from auth import router as auth_router
@@ -97,10 +97,27 @@ def get_trip(stops: str, currency: str = "EUR", origin: str = "VNO"):
     return {"currency": currency, "trip": trip}
 
 
+def _currency(code):
+    if code not in CURRENCIES:
+        raise HTTPException(status_code=400, detail=f"Unknown currency {code}")
+    return code
+
+
+@app.get("/rates")
+def rates():
+    """Today's exchange rates from EUR, so the app can show every price in the chosen currency."""
+    try:
+        return {"base": "EUR", "rates": get_rates()}
+    except Exception:
+        raise HTTPException(status_code=503, detail="Exchange rates are not available right now")
+
+
 @app.get("/search")
 def search_trips(budget: float, days: int, currency: str = "EUR", origin: str = "VNO"):
     origin = _origin(origin)
-    results = find_destinations_within_budget(budget, days, origin)
+    currency = _currency(currency)
+    # the budget is in the chosen currency; prices are in EUR
+    results = find_destinations_within_budget(to_eur(budget, currency), days, origin)
     # nothing fits: tell the user what the cheapest trip would cost
     cheapest = None if results else next(iter(find_destinations_within_budget(float("inf"), days, origin)), None)
     
@@ -113,7 +130,7 @@ def search_trips(budget: float, days: int, currency: str = "EUR", origin: str = 
         "currency": currency,
         "origin": origin,
         "count": len(results),
-        "cheapest_total": cheapest["total_cost"] if cheapest else None,
+        "cheapest_total": convert_amount(cheapest["total_cost"], currency) if cheapest else None,
         "results": results
     }
 
@@ -121,7 +138,8 @@ def search_trips(budget: float, days: int, currency: str = "EUR", origin: str = 
 @app.get("/search-multi")
 def search_multi_trips(budget: float, days: int, countries: int = 2, currency: str = "EUR", origin: str = "VNO"):
     origin = _origin(origin)
-    results = find_multi_country_trips(budget, days, countries, origin)
+    currency = _currency(currency)
+    results = find_multi_country_trips(to_eur(budget, currency), days, countries, origin)
     cheapest = None if results else next(iter(find_multi_country_trips(float("inf"), days, countries, origin)), None)
  
     for trip in results:
@@ -134,6 +152,6 @@ def search_multi_trips(budget: float, days: int, countries: int = 2, currency: s
         "currency": currency,
         "origin": origin,
         "count": len(results),
-        "cheapest_total": cheapest["total_cost"] if cheapest else None,
+        "cheapest_total": convert_amount(cheapest["total_cost"], currency) if cheapest else None,
         "results": results
     }

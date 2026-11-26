@@ -42,6 +42,7 @@ export default function Tickets({
         label: `Ticket #${pad(i + 1)}`,
         origin: t.origin,
         stops: t.stops,
+        currency: t.currency,
       })),
     [tickets],
   )

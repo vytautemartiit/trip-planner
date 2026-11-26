@@ -4,7 +4,8 @@ import Photo from './Photo'
 import RouteMap from './RouteMap'
 import { BookmarkIcon } from './TripCard'
 import { cityName, countryName, findCity } from '../destinations'
-import { costTotals, formatMoney, formatPrice, plural } from '../utils'
+import { costTotals, formatPrice, plural } from '../utils'
+import { money } from '../rates'
 import { originOf } from '../origins'
 import { formatRange, stayDates } from '../chat'
 import { tr } from '../i18n'
@@ -39,7 +40,10 @@ export default function TripDetail({ trip, currency, saved, onToggleSave, onShar
     }
   }, [onClose])
 
-  const routes = useMemo(() => [{ key: trip.key, color: '#1f2d2a', label: tr('This trip'), origin: trip.origin, stops: trip.stops }], [trip])
+  const routes = useMemo(
+    () => [{ key: trip.key, color: '#1f2d2a', label: tr('This trip'), origin: trip.origin, stops: trip.stops, currency }],
+    [trip, currency],
+  )
 
   const stop = trip.stops[active]
   const dates = stayDates(trip)
@@ -163,7 +167,7 @@ export default function TripDetail({ trip, currency, saved, onToggleSave, onShar
                         {plural(s.days, 'day')} · {countryName(s.destination)}
                       </span>
                     </span>
-                    {s.total_cost != null && <span className="tl-cost">{formatMoney(s.total_cost)}</span>}
+                    {s.total_cost != null && <span className="tl-cost">{money(s.total_cost, currency)}</span>}
                   </button>
                 </li>
               ))}
@@ -211,7 +215,7 @@ export default function TripDetail({ trip, currency, saved, onToggleSave, onShar
                       <p.icon aria-hidden="true" /> {p.label}
                     </span>
                     <span className="legend-pct">{Math.round((p.value / sum) * 100)}%</span>
-                    <strong>{formatMoney(p.value)}</strong>
+                    <strong>{money(p.value, currency)}</strong>
                   </li>
                 ))}
               </ul>

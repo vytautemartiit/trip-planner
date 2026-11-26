@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Banknote, Languages, MapPin, Plane, Sun } from 'lucide-react'
-import { cityName, commonsPage, countryName } from '../destinations'
-import { formatMoney } from '../utils'
+import { cityName, commonsPage, countryName, photoAt } from '../destinations'
+import { money } from '../rates'
 import { DEFAULT_ORIGIN, flightTime, originFrom, originOf } from '../origins'
 import { tr } from '../i18n'
 
@@ -25,7 +25,7 @@ const placeNear = (el, rect) => {
 
 // A small info card for one destination: photos, a short intro, facts and typical prices.
 // `anchor` = the hovered photo's rectangle (floating card); without it the card opens as a dialog (touch screens).
-export default function CityCard({ city, anchor, prices, from = originOf(), onClose, onPlan, onPointerEnter, onPointerLeave }) {
+export default function CityCard({ city, anchor, prices, currency = 'EUR', from = originOf(), onClose, onPlan, onPointerEnter, onPointerLeave }) {
   const photos = [{ src: city.src, caption: cityName(city.name), author: city.author, license: city.license }, ...city.gallery]
   const [active, setActive] = useState(0)
   const shown = photos[active]
@@ -93,7 +93,7 @@ export default function CityCard({ city, anchor, prices, from = originOf(), onCl
             onPointerEnter={() => setActive(i)}
             aria-label={`Show ${p.caption}`}
           >
-            <img src={p.src} alt="" loading="lazy" decoding="async" />
+            <img src={photoAt(p.src, 330)} alt="" decoding="async" />
           </button>
         ))}
       </div>
@@ -139,15 +139,15 @@ export default function CityCard({ city, anchor, prices, from = originOf(), onCl
             <span>
               <strong>
                 {prices.flight_estimated ? '~' : ''}
-                {formatMoney(prices.flight_price)}
+                {money(prices.flight_price, currency)}
               </strong>{' '}
               flight
             </span>
             <span>
-              <strong>{formatMoney(prices.hotel_per_night)}</strong> {tr("/ night")}
+              <strong>{money(prices.hotel_per_night, currency)}</strong> {tr("/ night")}
             </span>
             <span>
-              <strong>{formatMoney(prices.daily_cost)}</strong> {tr("/ day")}
+              <strong>{money(prices.daily_cost, currency)}</strong> {tr("/ day")}
             </span>
           </div>
         )}

@@ -1,7 +1,8 @@
 import Photo from './Photo'
 import { ArrowRight, BedDouble, CalendarDays, MapPin, Plane, UtensilsCrossed } from 'lucide-react'
 import { cityCode, cityName, countryName } from '../destinations'
-import { countries, formatMoney, formatPrice, plural, tripTitle, routeCodes } from '../utils'
+import { countries, formatPrice, plural, tripTitle, routeCodes } from '../utils'
+import { money } from '../rates'
 import { tripRange } from '../chat'
 import { tr } from '../i18n'
 
@@ -91,16 +92,16 @@ export default function TripCard({ trip, index, currency, saved, onToggleSave, o
           {trip.multi
             ? trip.stops.map((s) => (
                 <span key={s.destination} className="mini-chip">
-                  {cityCode(s.destination)} · {s.days}d · {formatMoney(s.total_cost)}
+                  {cityCode(s.destination)} · {s.days}d · {money(s.total_cost, currency)}
                 </span>
               ))
             : [
                 <span key="f" className="mini-chip">
-        <Plane aria-hidden="true" /> {formatMoney(first.flight_cost)}</span>,
+        <Plane aria-hidden="true" /> {money(first.flight_cost, currency)}</span>,
                 <span key="h" className="mini-chip">
-        <BedDouble aria-hidden="true" /> {formatMoney(first.hotel_cost)}</span>,
+        <BedDouble aria-hidden="true" /> {money(first.hotel_cost, currency)}</span>,
                 <span key="l" className="mini-chip">
-        <UtensilsCrossed aria-hidden="true" /> {formatMoney(first.living_cost)}</span>,
+        <UtensilsCrossed aria-hidden="true" /> {money(first.living_cost, currency)}</span>,
               ]}
         </div>
       </div>

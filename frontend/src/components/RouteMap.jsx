@@ -3,7 +3,8 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { cityName, countryName, findCity } from '../destinations'
 import { originOf } from '../origins'
-import { ROUTE_COLORS, formatMoney, plural } from '../utils'
+import { ROUTE_COLORS, plural } from '../utils'
+import { money, useRates } from '../rates'
 import { tr } from '../i18n'
 import { useTheme } from '../theme'
 
@@ -46,6 +47,7 @@ export default function RouteMap({ routes, highlight = null, numbered = false, a
   const clickRef = useRef(onStopClick)
   // The near-black route line would vanish on the dark map, so it turns peach there
   const dark = useTheme() === 'dark'
+  const rates = useRates()
 
   useEffect(() => {
     clickRef.current = onStopClick
@@ -165,8 +167,8 @@ export default function RouteMap({ routes, highlight = null, numbered = false, a
       let body
       if (routes.length === 1) {
         const { stop, index } = first
-        body = `<b class="tt-days">${esc(plural(stop.days, 'day'))}</b> {tr("staying here")}
-          <span>Stop ${index + 1} of ${first.route.stops.length}${stop.total_cost != null ? ` · ${esc(formatMoney(stop.total_cost))}` : ''}</span>`
+        body = `<b class="tt-days">${esc(plural(stop.days, 'day'))}</b> ${esc(tr("staying here"))}
+          <span>Stop ${index + 1} of ${first.route.stops.length}${stop.total_cost != null ? ` · ${esc(money(stop.total_cost, first.route.currency))}` : ''}</span>`
       } else {
         body = entries
           .map(
@@ -200,7 +202,7 @@ export default function RouteMap({ routes, highlight = null, numbered = false, a
       fittedRef.current = signature
       map.fitBounds(bounds.pad(0.15), { maxZoom: 6, animate: false })
     }
-  }, [routes, highlight, numbered, activeIndex, dark])
+  }, [routes, highlight, numbered, activeIndex, dark, rates])
 
   return <div ref={elRef} className={`route-map ${className}`} role="region" aria-label={tr("Route map")} />
 }

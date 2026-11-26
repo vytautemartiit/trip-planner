@@ -19,9 +19,10 @@ import { BASE_URL } from './api'
 import { authApi, chatApi, errorText, loadSession, sameStays, stayDates, storeSession, todayIso, tripRange, verifyApi } from './chat'
 import { DEFAULT_ORIGIN, ORIGINS, originForCountry, originFrom, originName, originOf } from './origins'
 import { regionName } from './names'
-import { CITIES, MAX_COUNTRIES, cityName } from './destinations'
+import { CITIES, MAX_COUNTRIES, cityName, photoAt } from './destinations'
 import { CURRENCIES, countries as countriesLabel, formatMoney, normalizeTrip, plural, symbols, tripTitle } from './utils'
 import { tr, useLang } from './i18n'
+import { convert, loadRates, money, rateFor, tidy, useRates } from './rates'
 
 // Loaded when first needed, so the first screen comes up faster (the map library alone is big)
 const TripDetail = lazy(() => import('./components/TripDetail'))
@@ -101,6 +102,7 @@ function Chip({ active, onClick, children }) {
 
 function App() {
   useLang() // re-render everything when the language changes
+  useRates() // …and when today's exchange rates arrive
   const { toast, confirm } = useFeedback()
   const [view, setViewState] = useState(START.view || 'explore')
   const exploreHash = useRef(START.search ? window.location.hash : '#/') // Explore's address, with the last search
@@ -187,10 +189,18 @@ function App() {
     if (searched) runSearch({ countries: next, days: nextDays })
   }
 
+  // The budget is in the chosen currency, so switching currency converts it (€500 -> about 12 600 Kč)
   const changeCurrency = (c) => {
+    if (c === currency) return
+    const nextBudget = budget ? tidy(convert(Number(budget), currency, c)) : budget
     setCurrency(c)
-    if (searched) runSearch({ currency: c })
+    setBudget(nextBudget)
+    if (searched) runSearch({ currency: c, budget: nextBudget })
   }
+
+  useEffect(() => {
+    loadRates()
+  }, [])
 
   const changeStartDate = (iso) => {
     setStartDate(iso)
@@ -706,6 +716,12 @@ function App() {
   )
 
   const cheapest = results.length ? Math.min(...results.map((t) => t.total_cost)) : 0
+
+  // Budget slider range in the chosen currency (€50–€3,000, converted)
+  const rate = rateFor(currency) ?? 1
+  const sliderStep = rate >= 20 ? 100 : 10
+  const sliderMin = Math.max(sliderStep, Math.round((50 * rate) / sliderStep) * sliderStep)
+  const sliderMax = Math.round((3000 * rate) / sliderStep) * sliderStep
   const resultCurrency = query?.currency || currency
 
   return (
@@ -831,7 +847,9 @@ function App() {
                         showCity(c, e.currentTarget, false)
                       }}
                     >
-                      <img src={c.src} alt="" loading="lazy" />
+                      {/* Not lazy: the strip moves by animation, and phones often never notice the
+                          cards sliding into view, leaving them blank. Small size keeps it light. */}
+                      <img src={photoAt(c.src, 330)} alt="" decoding="async" />
                       <span className="strip-caption">{cityName(c.name)}</span>
                     </button>
                   )
@@ -886,20 +904,20 @@ function App() {
               <div className="field">
                 <div className="field-head">
                   <label htmlFor="budget">{tr("Budget")}</label>
-                  <span className="field-value">{formatMoney(budget || 0)}</span>
+                  <span className="field-value">{formatMoney(budget || 0, currency)}</span>
                 </div>
                 <input
                   type="range"
                   className="slider"
-                  min="50"
-                  max="3000"
-                  step="10"
-                  value={budget || 50}
+                  min={sliderMin}
+                  max={sliderMax}
+                  step={sliderStep}
+                  value={budget || sliderMin}
                   onChange={(e) => setBudget(Number(e.target.value))}
                   aria-label={tr("Budget slider")}
                 />
                 <div className="pill-input">
-                  <span className="unit">€</span>
+                  <span className="unit">{symbols[currency]}</span>
                   <input
                     id="budget"
                     type="number"
@@ -1008,7 +1026,7 @@ function App() {
                 </h2>
                 {!loading && results.length > 0 && query && (
                   <span className="results-sub">
-                    {tr('from {price}', { price: formatMoney(cheapest) })} ·{' '}
+                    {tr('from {price}', { price: money(cheapest, resultCurrency) })} ·{' '}
                     {query.startDate
                       ? tripRange({ startDate: query.startDate, stops: [{ days: Number(query.days) }] })
                       : plural(Number(query.days), 'day')}{' '}
@@ -1059,7 +1077,7 @@ function App() {
               <EmptyState
                 icon={SearchX}
                 title={tr('Nothing fits {budget} for {days}', {
-                  budget: formatMoney(query.budget),
+                  budget: formatMoney(query.budget, query.currency),
                   days: plural(Number(query.days), 'day'),
                   n: query.days,
                 })}
@@ -1073,7 +1091,7 @@ function App() {
                           n: query.days,
                           countries: countriesLabel(query.countries),
                           city: originFrom(originOf(query.origin)),
-                          price: formatMoney(query.cheapest),
+                          price: formatMoney(query.cheapest, query.currency),
                         },
                       )
                     : tr('A trip to {countries} needs at least {days}.', {
@@ -1093,7 +1111,7 @@ function App() {
                       runSearch({ budget: b })
                     }}
                   >
-                    {tr('Search with {price}', { price: formatMoney(Math.ceil(query.cheapest / 10) * 10) })}
+                    {tr('Search with {price}', { price: formatMoney(Math.ceil(query.cheapest / 10) * 10, query.currency) })}
                   </button>
                 )}
                 {Number(query.days) > query.countries && (
@@ -1161,6 +1179,7 @@ function App() {
           city={cityInfo.city}
           anchor={cityInfo.anchor}
           prices={prices[cityInfo.city.destination]}
+          currency={currency}
           from={originOf(origin)}
           onClose={closeCity}
           onPlan={planFromCity}

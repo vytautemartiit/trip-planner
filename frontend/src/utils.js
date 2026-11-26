@@ -1,6 +1,6 @@
 import { cityCode, cityName } from './destinations'
 import { DEFAULT_ORIGIN } from './origins'
-import { plural } from './i18n'
+import { locale, plural } from './i18n'
 
 export const routeCodes = (trip) => `${trip.origin || DEFAULT_ORIGIN}${trip.stops.map((s) => ` → ${cityCode(s.destination)}`).join('')}`
 export const tripTitle = (trip) => trip.stops.map((s) => cityName(s.destination)).join(' · ')
@@ -11,9 +11,11 @@ export const CURRENCIES = Object.keys(symbols)
 
 const SUFFIX_CURRENCIES = new Set(['PLN', 'CZK'])
 
+// Whole units with thousands separators: "€1,250", "12 600 Kč"
 export const formatMoney = (amount, currency = 'EUR') => {
   const symbol = symbols[currency] || currency
-  return SUFFIX_CURRENCIES.has(currency) ? `${amount} ${symbol}` : `${symbol}${amount}`
+  const n = Math.round(Number(amount) || 0).toLocaleString(locale())
+  return SUFFIX_CURRENCIES.has(currency) ? `${n} ${symbol}` : `${symbol}${n}`
 }
 
 export const formatPrice = (trip, currency) => {

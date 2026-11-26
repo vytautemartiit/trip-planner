@@ -7,6 +7,9 @@ import { getLang } from './i18n'
 const thumb = (path) => `https://thumb.wikimedia.org/wikipedia/commons/thumb/${path}`
 
 // https://thumb.wikimedia.org/wikipedia/commons/thumb/b/bf/FILE/960px-FILE -> Commons page for FILE
+// The same Wikimedia photo at another standard width (e.g. 330) for small pictures
+export const photoAt = (src, width) => src.replace('/960px-', `/${width}px-`)
+
 export const commonsPage = (src) => `https://commons.wikimedia.org/wiki/File:${src.split('/')[8]}`
 
 const photo = (src, caption, author, license) => ({ src, caption, author, license })
