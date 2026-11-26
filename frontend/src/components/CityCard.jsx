@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Banknote, Languages, MapPin, Plane, Sun } from 'lucide-react'
-import { cityName, commonsPage, countryName } from '../destinations'
+import { cityName, commonsPage, countryName, photoAt } from '../destinations'
 import { formatMoney } from '../utils'
 import { DEFAULT_ORIGIN, flightTime, originFrom, originOf } from '../origins'
 import { tr } from '../i18n'
@@ -93,7 +93,7 @@ export default function CityCard({ city, anchor, prices, from = originOf(), onCl
             onPointerEnter={() => setActive(i)}
             aria-label={`Show ${p.caption}`}
           >
-            <img src={p.src} alt="" loading="lazy" decoding="async" />
+            <img src={photoAt(p.src, 330)} alt="" decoding="async" />
           </button>
         ))}
       </div>

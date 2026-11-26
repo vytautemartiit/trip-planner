@@ -19,7 +19,7 @@ import { BASE_URL } from './api'
 import { authApi, chatApi, errorText, loadSession, sameStays, stayDates, storeSession, todayIso, tripRange, verifyApi } from './chat'
 import { DEFAULT_ORIGIN, ORIGINS, originForCountry, originFrom, originName, originOf } from './origins'
 import { regionName } from './names'
-import { CITIES, MAX_COUNTRIES, cityName } from './destinations'
+import { CITIES, MAX_COUNTRIES, cityName, photoAt } from './destinations'
 import { CURRENCIES, countries as countriesLabel, formatMoney, normalizeTrip, plural, symbols, tripTitle } from './utils'
 import { tr, useLang } from './i18n'
 
@@ -831,7 +831,9 @@ function App() {
                         showCity(c, e.currentTarget, false)
                       }}
                     >
-                      <img src={c.src} alt="" loading="lazy" />
+                      {/* Not lazy: the strip moves by animation, and phones often never notice the
+                          cards sliding into view, leaving them blank. Small size keeps it light. */}
+                      <img src={photoAt(c.src, 330)} alt="" decoding="async" />
                       <span className="strip-caption">{cityName(c.name)}</span>
                     </button>
                   )
