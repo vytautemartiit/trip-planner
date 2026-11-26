@@ -3022,3 +3022,21 @@ body, .nav { transition: background-color 0.2s ease, color 0.2s ease; }
 }
 .skip-link:focus-visible { top: 12px; }
 #main:focus { outline: none; }
+
+/* ---------- Top bar on phones: two rows so nothing overlaps ----------
+   Row 1: logo · EN/LT · theme · account. Row 2: the three tabs across the full width. */
+@media (max-width: 600px) {
+  .nav { flex-wrap: wrap; row-gap: 10px; padding: 10px 0; }
+  .brand { display: flex; font-size: 17px; gap: 8px; }
+  .nav-tabs { order: 3; flex: 1 0 100%; min-width: 0; }
+  .nav-tabs button { flex: 1; justify-content: center; padding: 9px 8px; white-space: nowrap; }
+}
+/* Full tab names while they fit ("My tickets"); the log-in button stays icon-only */
+@media (min-width: 421px) and (max-width: 600px) {
+  .nav-tabs .tab-long { display: inline; }
+  .nav-tabs .tab-short { display: none; }
+}
+/* Narrow phones: logo mark only, so the buttons stay on one row */
+@media (max-width: 400px) {
+  .brand { font-size: 0; gap: 0; }
+}
